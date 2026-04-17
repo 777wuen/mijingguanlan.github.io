@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>密境观澜 · 来密云看一场海</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.33/dist/lenis.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+    <style>
+        :root { --mjgl-gold: #c5a35d; --mjgl-red: #5e0a0a; }
+        
+        /* 全局字体设定为宋体风格 */
+        body { 
+            font-family: 'Noto Serif SC', serif; 
+            background: #fdfcf8; 
+            color: #1a1a1a; 
+            overflow-x: hidden;
+            scroll-behavior: auto !important;
+        }
+
+        /* 杂志化排版细节 */
+        .drop-cap::first-letter {
+            float: left; font-size: 4rem; line-height: 1; font-weight: 900;
+            padding-right: 10px; color: var(--mjgl-gold);
+        }
+
+        /* 弹窗专用：图片背景 + 深色遮罩 */
+        .bg-modal-red-img {
+            background: 
+                linear-gradient(135deg, rgba(30, 2, 2, 0.95) 0%, rgba(60, 5, 5, 0.95) 100%), 
+                url('images/jingshenbeijing.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* 专门为“游玩路线”定制的图片背景类 */
+        .bg-route-custom {
+            background: 
+                linear-gradient(135deg, rgba(15, 35, 30, 0.9) 0%, rgba(5, 15, 10, 0.9) 100%), 
+                url('images/miyun1.jpg'); 
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* 强制单屏 */
+        .section-screen { height: 100vh; overflow: hidden; position: relative; }
+
+        /* 换成图片背景 + 半透明红色遮罩 */
+        .bg-red-spirit { 
+            background: 
+                linear-gradient(135deg, rgba(42, 4, 4, 0.85) 0%, rgba(74, 8, 8, 0.85) 100%), 
+                url('images/jingshenbeijing.jpg'); 
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .bugle-silhouette {
+            position: absolute; right: -5%; bottom: -5%; height: 85%; opacity: 0.12;
+            pointer-events: none; z-index: 0; filter: brightness(0);
+        }
+
+        /* 罗盘交互按钮 */
+        .compass-btn { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.6s; z-index: 50; }
+        .compass-btn:hover { transform: translateY(-5px); }
+        .compass-ring { 
+            width: 50px; height: 50px; border: 1px solid currentColor; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; position: relative;
+        }
+        .compass-ring::after {
+            content: ''; position: absolute; inset: -8px; border: 1px solid currentColor; border-radius: 50%; opacity: 0.2;
+            animation: pulse 3s infinite;
+        }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.4; } 100% { transform: scale(1.4); opacity: 0; } }
+
+        /* 文字分栏 */
+        .column-2 { column-count: 2; column-gap: 2rem; }
+
+        /* 写意感谢文字样式 */
+        .thanks-msg {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 10rem;
+            color: #c5a35d; 
+            text-shadow: 0 0 50px rgba(197, 163, 93, 0.4);
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out; 
+            pointer-events: none;
+            z-index: 99999;
+            white-space: nowrap;
+            letter-spacing: 0.5em;
+        }
+        .thanks-msg.show {
+            opacity: 1;
+        }
+
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body x-data="{ openModal: false, openRate: false, modalTitle: '', modalContent: '', modalImg: '', rating: 0, modalTheme: 'green' }">
+    
+    <nav class="fixed w-full z-[70] px-6 py-10 pointer-events-none"> 
+        <div class="max-w-[1600px] mx-auto flex justify-between items-start"> 
+            <div class="flex items-center space-x-6 pointer-events-auto"> 
+                <div class="w-28 h-28 bg-white/10 backdrop-blur-md rounded-[32px] border border-white/20 flex items-center justify-center overflow-hidden shadow-2xl">
+                    <img src="images/logo.jpg" alt="LOGO" class="w-full h-full object-cover">
+                </div>
+                <div class="flex flex-col">
+                    <h1 class="text-white text-4xl tracking-widest shadow-sm" style="font-family: 'Ma Shan Zheng', cursive;">密境观澜</h1>
+                    <span class="text-[12px] text-white/40 tracking-[0.3em] font-light -mt-1 uppercase">Miyun Vision Team</span>
+                </div>
+            </div>
+            <div class="hidden lg:flex items-center space-x-3 bg-white/60 backdrop-blur-3xl p-1.5 rounded-full border border-white/40 pointer-events-auto shadow-sm">
+                <a href="javascript:void(0)" onclick="lenis.scrollTo('#myth')" class="px-7 py-2.5 rounded-full text-sm text-black font-bold hover:bg-emerald-900 hover:text-white transition-all">起源</a>
+                <a href="javascript:void(0)" onclick="lenis.scrollTo('#red')" class="px-7 py-2.5 rounded-full text-sm text-black font-bold hover:bg-emerald-900 hover:text-white transition-all">风骨</a>
+                <a href="javascript:void(0)" onclick="lenis.scrollTo('#panorama')" class="px-7 py-2.5 rounded-full text-sm text-black font-bold hover:bg-emerald-900 hover:text-white transition-all">全景</a>
+                <a href="javascript:void(0)" onclick="lenis.scrollTo('#scenery')" class="px-7 py-2.5 rounded-full text-sm text-black font-bold hover:bg-emerald-900 hover:text-white transition-all">寻胜</a>
+                <a href="javascript:void(0)" onclick="lenis.scrollTo('#market')" class="px-7 py-2.5 rounded-full text-sm text-black font-bold hover:bg-emerald-900 hover:text-white transition-all">礼赠</a>
+            </div>
+        </div>
+    </nav>
+
+    <section id="myth" class="section-screen flex items-center bg-[#0d1b1e] text-white px-20">
+        <div class="absolute inset-0 opacity-30">
+            <img src="images/miyun1.jpg" class="w-full h-full object-cover">
+        </div>
+        <div class="relative z-10 w-full max-w-4xl">
+            <h2 class="text-7xl md:text-8xl font-black mb-8 leading-tight">燕山藏海<br><span class="text-emerald-500">密境观澜</span></h2>
+            <p class="text-2xl font-light leading-relaxed italic opacity-80 border-l-4 border-emerald-500 pl-6">
+                传说燕山龙脊托起了远古的神迹，遗落的瑶池化作了今日的密云。<br>
+                对于困在钢铁森林中渴望自由的年轻灵魂而言，无需跨越数千公里去追逐海岸线。<br>
+                在这里，群山是风的岛屿，云雾是内陆永恒的潮汐——来密云，赴一场属于我们的看海之约。
+            </p>
+            <div @click="lenis.scrollTo('#red')" class="compass-btn mt-20 text-emerald-400 w-max">
+                <div class="compass-ring"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2.5"></path></svg></div>
+                <span class="text-xs mt-3 tracking-[0.4em] font-bold">溯源风骨</span>
+            </div>
+        </div>
+    </section>
+
+    <section id="red" class="section-screen flex items-center bg-red-spirit text-white px-20">
+        <img src="https://www.svgrepo.com/show/54124/trumpet-player.svg" class="bugle-silhouette">
+        <div class="relative z-10 w-full grid lg:grid-cols-12 gap-16 items-center">
+            <div class="lg:col-span-6 pr-10"> 
+                <h2 class="text-7xl font-black mb-10 text-red-500">三魂铸脊 · 血脉永续</h2>
+                <div class="text-xl text-red-100/80 leading-relaxed text-justify space-y-6">
+                    <p class="drop-cap">密云的红色，是一场波澜壮阔的精神之海。英雄母亲邓玉芬的名字，镌刻在密云山水的最深处。在那段血色黄昏，她亲手送别丈夫和五个儿子，将家庭的温情化作大地的坚韧。这不仅是母性的牺牲，更是民族不屈的写照。</p>
+                    <p>当古北口的冲锋号角响起，长城垛口见证了铁血之海。士兵用肉身补齐砖石的裂缝，在碉楼里留下永不磨灭的魂魄。这种对尊严的坚守，如潮汐般拍打着历史的岸礁。</p>
+                    <p>和平年代，密云水库的建设翻开了奉献的新篇。二十万移民告别故土，舍弃世代躬耕的良田，换来首都的万顷碧波。这种“舍小家为大家”的情怀，正如库水般广博而深沉。我们不仅是在阅读一段历史，更是在触摸这片土地跳动的赤诚脉搏。</p>
+                    <p>如今，走在密云的红土地上，每一声风响都像是当年的回音。英雄的精神已不再是陈列室里的文字，而是化作了乡村振兴的动力。来密云，看这场跨越时空的深海，领略燕山之魂的阔大与深沉。</p>
+                </div>
+            </div>
+            <div class="lg:col-span-6 grid grid-cols-1 gap-4">
+                <div @click="openModal=true; modalTheme='red';modalTitle='山河母亲：邓玉芬'; modalImg='images/mother.png'; modalContent='在抗日的烽火中，密云的英雄母亲邓玉芬将丈夫和五个儿子毅然送上战场，最终六位至亲血染沙场。她没有惊天动地的豪言壮语，只有属于中国母亲最深沉的坚韧与大义。邓玉芬不仅养育了不屈的燕赵儿女，更用血泪浇灌了这片土地的尊严。如今，走在密云的乡野，那份无私奉献的底色，依然是这片土地生生不息、走向振兴的最强精神内核。';" 
+                     class="p-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl hover:bg-red-600/30 transition cursor-pointer flex flex-col justify-center">
+                    <h3 class="text-2xl font-bold mb-3 tracking-wide">英雄母亲</h3>
+                    <p class="text-sm text-white/70 leading-relaxed italic">舍六子以赴国难，铸丰碑于天地间。点击聆听密云大地上的英雄赞歌。</p>
+                </div>
+                <div @click="openModal=true;modalTheme='red'; modalTitle='古北雄关：铁血防线'; modalImg='images/fight.png'; modalContent='“长城抗战，古北口为最。”1933年，面对外敌的坚船利炮，年轻的中国军人在此以血肉之躯筑起第二道钢铁长城。在激烈的阵地战中，古北口的长城残破了砖石，却挺拔了民族的脊梁。每一声空谷的回音，都是英烈不灭的呐喊。这股百折不挠的铁血精神，跨越时空，如今正化作密云青年在数字时代锐意创新、攻坚克难的澎湃动力。';" 
+                     class="p-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl hover:bg-red-600/30 transition cursor-pointer flex flex-col justify-center">
+                    <h3 class="text-2xl font-bold mb-3 tracking-wide">雄关激战</h3>
+                    <p class="text-sm text-white/70 leading-relaxed italic">弹痕贯穿岁月，烽火淬炼脊梁。点击重温长城砖石间的铁血回响。</p>
+                </div>
+                <div @click="openModal=true;modalTheme='red'; modalTitle='大爱库水：移民情怀'; modalImg='images/move.png'; modalContent='燕山不语，碧波作证。为了首都的一泓清波，二十多万密云儿女毅然告别世代躬耕的良田与祖屋，拔根迁徙。这是一场史诗般的平民壮举，也是密云人民对国家最深情、最温厚的献礼。当年“舍小家，为大家”的水库精神，如今已深深烙印在绿水青山之中。这片由纯粹奉献汇聚成的“海”，正化作生态红利，滋养着密云乡村振兴的丰硕果实。';" 
+                     class="p-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl hover:bg-red-600/30 transition cursor-pointer flex flex-col justify-center">
+                    <h3 class="text-2xl font-bold mb-3 tracking-wide">奉献移民</h3>
+                    <p class="text-sm text-white/70 leading-relaxed italic">别故土以聚碧波，舍小家而济苍生。点击感受燕山脚下的温情壮举。</p>
+                </div>
+            </div>
+        </div>
+        <div @click="lenis.scrollTo('#panorama')" class="compass-btn absolute bottom-8 left-1/2 -translate-x-1/2 text-red-500">
+            <div class="compass-ring"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2.5"></path></svg></div>
+            <span class="text-[10px] mt-2 tracking-[0.4em] font-bold">全貌全景</span>
+        </div>
+    </section>
+
+    <section id="panorama" class="section-screen flex items-center justify-center">
+        <div class="absolute inset-0">
+            <img src="images/miyun2.jpg" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-black/40"></div>
+        </div>
+        <div class="relative text-center text-white px-6">
+            <div class="text-7xl md:text-[150px] mb-8 text-white/95 drop-shadow-2xl" style="font-family: 'Ma Shan Zheng', cursive;">密云水库</div>
+            <h2 class="text-6xl md:text-8xl font-black tracking-widest leading-none mb-4">万顷瑠璃 · 燕山之瞳</h2>
+            <p class="text-xl tracking-[0.8em] opacity-60 italic">观澜密境 · 见天地宽</p>
+        </div>
+        <div @click="lenis.scrollTo('#interlude')" class="compass-btn absolute bottom-8 left-1/2 -translate-x-1/2 text-white/50">
+            <div class="compass-ring"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2.5"></path></svg></div>
+        </div>
+    </section>
+
+    <section id="interlude" class="py-24 relative flex flex-col items-center justify-center px-10 overflow-hidden">
+        <div class="absolute inset-0 z-0">
+            <img src="images/miyun2.jpg" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-black/40"></div>
+        </div>
+        <div class="text-center mb-8 z-10 shrink-0 relative">
+            <h2 class="text-3xl md:text-4xl font-bold text-white tracking-[0.5em] ml-3">密云导览图</h2>
+            <div class="w-12 h-1 bg-white mx-auto mt-4 opacity-40 rounded-full"></div>
+        </div>
+        <div class="max-w-[1280px] w-full aspect-video rounded-[40px] overflow-hidden shadow-2xl relative z-10">
+            <img src="images/luxian.png" class="w-full h-full object-cover">
+        </div>
+        <div @click="lenis.scrollTo('#panorama-2')" class="compass-btn mt-12 text-white/70 relative z-10">
+            <div class="compass-ring border-white/50"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2.5"></path></svg></div>
+            <span class="text-[10px] mt-2 tracking-[0.4em] font-bold">查看全景</span>
+        </div>
+    </section>
+
+    <section id="panorama-2" class="section-screen relative flex flex-col items-center justify-center pt-10">
+        <div class="absolute inset-0 z-0">
+            <img src="images/miyun2.jpg" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div> 
+        </div>
+
+        <div class="relative z-10 w-full max-w-[1440px] mx-auto px-6 text-center">
+            <h2 class="text-6xl md:text-8xl mb-20 text-white/95 drop-shadow-2xl tracking-widest" style="font-family: 'Ma Shan Zheng', cursive;">特色游玩路线</h2>
+
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-12 px-10">
+                <template x-for="mascot in [
+                    { id: 'lailai', name: '来来', theme: 'red', tag: '红色路线', title: '来来 · 继往开来', desc: '继往开来，踏上密云的红色热土。这条路线将带您重温古北口长城抗战的烽火岁月，聆听英雄母亲邓玉芬的感人故事，在历史的厚重中汲取青年奋斗的力量。', img: 'images/lailai.jpg', map: 'images/route_lailai.jpg' },
+                    { id: 'mimi', name: '谧谧', theme: 'green', tag: '养生路线', title: '谧谧 · 宁静养生', desc: '寻觅静谧，放松身心。穿梭于密云的生态涵养区，享受日光山谷等天然氧吧的深呼吸，品尝健康有机的乡村素食，让疲惫的灵魂在山水间得到彻底治愈。', img: 'images/mimi.jpg', map: 'images/route_mimi.jpg' },
+                    { id: 'yunyun', name: '云云', theme: 'green', tag: '观鸟路线', title: '云云 · 自然观鸟', desc: '漫步云端，与飞羽为伴。密云水库不仅是首都的水源地，更是候鸟迁徙的重要驿站。跟随云云的脚步，用镜头捕捉珍稀鸟类的灵动瞬间，感悟生态振兴的硕果。', img: 'images/yunyun.jpg', map: 'images/route_yunyun.jpg' },
+                    { id: 'kangkang', name: '康康', theme: 'green', tag: '健身路线', title: '康康 · 活力健康', desc: '康健体魄，挥洒汗水。无论是环湖骑行的御风而行，还是攀登云蒙山的步步登高，这条路线是户外爱好者的天堂，让您在绿水青山中释放无限活力。', img: 'images/kangkang.jpg', map: 'images/route_kangkang.jpg' },
+                    { id: 'haihai', name: '嗨嗨', theme: 'green', tag: '青年路线', title: '嗨嗨 · 青春潮玩', desc: '青春嗨玩，不负韶华。结合星空露营、草地音乐与特色水上运动，专为年轻灵魂打造的社交与狂欢之旅。来密云，换一种方式燥起来，定义新一代的乡村文旅！', img: 'images/haihai.jpg', map: 'images/route_haihai.jpg' }
+                ]">
+                    <div @click="openModal=true; modalTheme = (mascot.id === 'lailai' ? mascot.theme : 'route'); modalTitle=mascot.title; modalContent=mascot.desc; modalImg=mascot.map"
+                         class="flex flex-col items-center cursor-pointer group">
+                        
+                        <div class="w-32 h-32 md:w-44 md:h-44 bg-white/10 backdrop-blur-md rounded-full border-2 border-white/20 p-2 overflow-hidden shadow-lg transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] group-hover:border-white/60 group-hover:bg-white/20">
+                            <img :src="mascot.img" class="w-full h-full object-cover rounded-full">
+                        </div>
+                        
+                        <h3 class="mt-8 text-4xl font-bold text-white tracking-widest drop-shadow-md group-hover:text-amber-200 transition-colors" style="font-family: 'Ma Shan Zheng', cursive;" x-text="mascot.name"></h3>
+                        
+                        <span class="mt-4 px-6 py-2 rounded-full text-sm md:text-base font-bold text-emerald-950 bg-white/90 shadow-sm tracking-wide" x-text="mascot.tag"></span>
+                    </div>
+                </template>
+            </div>
+        </div>
+        
+        <div @click="lenis.scrollTo('#scenery')" class="compass-btn absolute bottom-8 left-1/2 -translate-x-1/2 text-white/60 z-10">
+            <div class="compass-ring border-white/40"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2.5"></path></svg></div>
+            <span class="text-[10px] mt-2 tracking-[0.4em] font-bold">寻胜山海</span>
+        </div>
+    </section>
+
+    <section id="scenery" class="section-screen relative flex items-center px-20">
+        <div class="absolute inset-0 z-0">
+            <img src="images/miyun2.jpg" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-black/50"></div>
+        </div>
+        <div class="max-w-7xl mx-auto grid lg:grid-cols-12 gap-16 items-center relative z-10">
+            <div class="lg:col-span-6 space-y-6">
+                <template x-for="item in [
+                    {n:'云蒙仙境', d:'誉为“北方小黄山”的云蒙山，是燕山山脉中一首气势磅礴的自然史诗。这里的主峰海拔高达1414米，奇峰林立，怪石嶙峋。由于独特的气候与地形，云蒙山常年云雾缭绕。每逢雨后初晴，浩渺的云气从深谷中腾涌而起，如潮水般漫过青翠的山脊，将座座山峰化作悬浮于云端之上的仙岛。这片壮阔的“云梦之海”，不仅是密云的生态冠冕，更是行者与山川对话的绝佳秘境。', i:'images/yunmeng.jpg'},
+                    {n:'日光山谷', d:'藏于群山环抱之中的日光山谷，是现代人逃离城市喧嚣、栖息灵魂的旷野乌托邦。这里将大自然的纯粹野趣与现代露营的精致生活完美融合，是数字乡村振兴下诞生的生态样板。白天，你可以在阳光普照的绿草地上感受微风与树摇；入夜，则在温暖的篝火旁仰望璀璨星河。它不仅仅是一个休闲营地，更是一份关于回归自然、重建人与土地连接的宁静契约。', i:'images/riguangshangu.png'},
+                    {n:'司马台长城', d:'作为我国唯一保留明代原貌的古长城，司马台以“险、密、奇、巧、全”冠绝天下。残破的城砖与垛口，未加粉饰地袒露着数百年前的硝烟与风霜，险峻的单边墙傲立于绝壁之上，诉说着不屈的民族魂魄。更令人震撼的是它的夜游体验——当夜幕低垂，提着马灯漫步于陡峭的台阶，长城上的灯火宛若一条发光的巨龙蜿蜒于苍茫群山间。在这场跨越时空的夜巡中，你能深刻触摸到历史深沉的脉搏。', i:'images/greatwall.jpg'}
+                ]">
+                    <div @click="openModal=true; modalTheme='green';modalTitle=item.n; modalContent=item.d; modalImg=item.i"
+                         class="group flex bg-white/10 backdrop-blur-md rounded-[40px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-700 cursor-pointer border border-white/20">
+                        <div class="w-1/3 h-48 overflow-hidden">
+                            <img :src="item.i" class="w-full h-full object-cover group-hover:scale-110 transition duration-[2s]">
+                        </div>
+                        <div class="w-2/3 p-8 flex flex-col justify-center">
+                            <h4 class="text-3xl font-bold text-white mb-3" x-text="item.n"></h4>
+                            <p class="text-sm text-white/70 tracking-widest">探秘详情 · 观澜密境</p>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            <div class="lg:col-span-6">
+                <h2 class="text-6xl font-black mb-6 text-white leading-tight">寻胜探幽 · 步履生莲</h2>
+                <div class="text-sm text-white/80 leading-7 text-justify space-y-4">
+                    <p class="drop-cap serif text-white">来密云看海，不仅是看水库的碧海，更是看云端之上的“云海”。云蒙山作为密云山水的冠冕，以奇、特、美名动京华。</p>
+                    <p>在这里，每一座山峰都是上亿年地壳运动的艺术品。每逢雨后，云气从谷底腾起，如潮汐般漫过山岗，置身其中，仿佛踏在一座孤悬海外的仙岛。这就是密云给予每一个行者的第一场海——云梦之海。</p>
+                    <p>而日光山谷展现的是另一种关于理想生活的“心海”。在星空下，在营火旁，现代文明与大自然的宁静达成了一种微妙的契约。它是数字化乡村振兴的样板，让城市的灵魂在旷野中找到锚点。</p>
+                    <p>当夜幕低垂，司马台长城的灯火点燃了“历史之海”。作为我国唯一保留明代原貌的古长城，它的险与奇令人震撼。提灯夜行，远处的火流萤如时间的长河在山脊滚动。在这里，你看到的不仅仅是断壁残垣，更是民族千年的血脉回响。来密云，看这场跨越时空的深海，你方能领略燕山之魂的阔大与深沉。</p>
+                </div>
+            </div>
+        </div>
+        <div @click="lenis.scrollTo('#market')" class="compass-btn absolute bottom-8 left-1/2 -translate-x-1/2 text-white/70 z-10">
+            <div class="compass-ring border-white/50"><svg class="w-6 h-6 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2.5"></path></svg></div>
+            <span class="text-[10px] mt-2 tracking-[0.4em] font-bold">滋养物产</span>
+        </div>
+    </section>
+
+    <section id="market" class="section-screen flex items-center bg-[#e8ddcb] px-20">
+        <div class="max-w-7xl mx-auto grid lg:grid-cols-12 gap-20 items-center">
+            <div class="lg:col-span-6">
+                <h2 class="text-6xl font-black mb-6 text-amber-900">万顷波光，馈以金秋</h2>
+                <div class="w-20 h-1.5 bg-amber-700/30 rounded-full mb-12"></div>
+                <div class="text-lg text-amber-950/80 leading-8 text-justify space-y-6">
+                    <p class="drop-cap serif text-amber-900">旅程的终章，我们带你跃入一片充满麦浪与果香的“丰收之海”。密云的土地，正以最质朴的方式，回应着每一个渴望回归自然的年轻灵魂。</p>
+                    <p>当梯田里的金米迎着燕山的晨风褪去青涩，当高山雪水将蓝莓酝酿出酸甜的诗意，你品尝到的不仅是食物本身的滋味，更是这片绿水青山蓄力了一整年的生命力...</p>
+                </div>
+                <button @click="openRate = true" class="mt-12 px-12 py-4 bg-emerald-950 text-white rounded-full text-lg font-bold shadow-2xl hover:bg-emerald-800 transition transform hover:scale-105">
+                    评价本场旅程
+                </button>
+            </div>
+            <div class="lg:col-span-6 grid grid-cols-2 md:grid-cols-3 gap-6">
+                <template x-for="p in [
+                    {n:'密云金米', d:'梯田小米，软糯香甜。', i:'images/xiaomi.jpg'},
+                    {n:'高山蓝莓', d:'雪水滋养，果肉紧致。', i:'images/lanmei.jpg'},
+                    {n:'精品草莓', d:'自然成熟，香气扑鼻。', i:'images/caomei.jpg'},
+                    {n:'沙地红薯', d:'软糯甘甜，高纤健康。', i:'images/hongshu.jpg'},
+                    {n:'库区活鱼', d:'净水孕育，肉质极鲜。', i:'images/fish.jpg'},
+                    {n:'燕山板栗', d:'肉质细腻，甘甜软糯。', i:'images/banli.jpg'}
+                ]">
+                    <div class="bg-white p-6 rounded-[40px] shadow-sm hover:shadow-xl transition-all border border-stone-100">
+                        <div class="aspect-square rounded-[30px] overflow-hidden mb-6"><img :src="p.i" class="w-full h-full object-cover"></div>
+                        <h4 class="font-bold text-emerald-950 text-2xl mb-2" x-text="p.n"></h4>
+                        <p class="text-sm text-black mb-6 leading-relaxed" x-text="p.d"></p>
+                        <button class="w-full py-3 bg-emerald-950 text-white rounded-full text-xs font-bold hover:bg-emerald-800 transition">选购</button>
+                    </div>
+                </template>
+            </div>
+        </div>
+        <div class="absolute bottom-10 left-1/2 -translate-x-1/2 text-[10px] text-emerald-900/20 tracking-[1.5em] font-bold uppercase">
+            团队 密境观澜 · 敬制
+        </div>
+    </section>
+
+    <div x-show="openModal" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md transition-all duration-500">
+        <div @click.away="openModal = false" 
+             :class="{
+                'bg-modal-red-img': modalTheme === 'red',
+                'bg-route-custom': modalTheme === 'route', 
+                'bg-[#fdfcf8]': modalTheme === 'green' || modalTheme === 'white'
+             }"
+             class="rounded-[60px] max-w-6xl w-full h-[80vh] flex flex-col md:flex-row overflow-hidden shadow-2xl relative">
+            
+            <div class="md:w-1/2 h-full">
+                <img :src="modalImg" class="w-full h-full object-cover">
+            </div>
+            
+            <div class="md:w-1/2 p-20 flex flex-col justify-center relative z-10" 
+                 :class="(modalTheme === 'red' || modalTheme === 'route') ? 'text-white' : 'text-emerald-950'">
+                
+                <h3 class="text-5xl font-black mb-10 leading-tight" x-text="modalTitle"></h3>
+                <div class="w-16 h-2 mb-12" :class="(modalTheme === 'red' || modalTheme === 'route') ? 'bg-white/40' : 'bg-red-600'"></div>
+                
+                <p class="leading-[2.2] text-xl serif italic text-justify" 
+                   :class="(modalTheme === 'red' || modalTheme === 'route') ? 'text-white/90' : 'text-gray-700'"
+                   x-text="modalContent"></p>
+                
+                <button @click="openModal = false" 
+                        class="mt-16 w-max px-14 py-5 rounded-full font-bold shadow-xl transition hover:scale-105"
+                        :class="(modalTheme === 'red' || modalTheme === 'route') ? 'bg-white text-emerald-950' : 'bg-emerald-950 text-white'">
+                    返回探索
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="openRate" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-emerald-950/95 backdrop-blur-md">
+        <div @click.away="openRate = false" class="bg-white rounded-[60px] p-24 text-center max-w-2xl w-full shadow-2xl">
+            <h3 class="text-4xl font-bold mb-6 text-emerald-950">诚挚期许 · 密境有约</h3>
+            <div class="flex justify-center space-x-6 mb-16 mt-12 text-7xl">
+                <template x-for="i in 5">
+                    <button @click="rating = i" class="transition-all duration-300 transform hover:scale-125" :class="rating >= i ? 'text-amber-400' : 'text-stone-200'">★</button>
+                </template>
+            </div>
+            <textarea placeholder="写下您对密云振兴的感悟..." class="w-full bg-stone-50 border-none rounded-[40px] p-10 mb-10 h-48 text-xl focus:ring-2 focus:ring-emerald-500"></textarea>
+            
+            <button @click="openRate = false; fireFireworks()" class="w-full py-6 bg-emerald-950 text-white rounded-[40px] font-bold text-2xl transition hover:scale-105">提交感悟</button>
+        </div>
+    </div>
+
+    <div id="thanks-msg" class="thanks-msg">感谢参观</div>
+
+    <script>
+        // 平滑滚动
+        const lenis = new Lenis({ 
+            duration: 1.5, 
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), 
+            smoothWheel: true 
+        });
+        function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+        requestAnimationFrame(raf);
+
+       // 烟花特效与写意文字函数 (丝滑优化版)
+        function fireFireworks() {
+            var myColors = ['#7ba57b', '#c5a35d', '#5e0a0a', '#ffffff'];
+            var duration = 2 * 1000; 
+            var end = Date.now() + duration;
+
+            (function frame() {
+                // 将每帧的数量降到 5，配合每秒 60 次的刷新，依然有数百个粒子，但完全不会卡顿
+                confetti({
+                    particleCount: 5, 
+                    angle: 60,
+                    spread: 80,
+                    origin: { x: 0, y: 0.7 },
+                    colors: myColors,
+                    scalar: 1.2, // 稍微把碎片改小一点点，提升渲染性能
+                    ticks: 150,  // 让碎片的滞空时间稍微变长，显得更饱满
+                    zIndex: 9999
+                });
+                confetti({
+                    particleCount: 5, 
+                    angle: 120,
+                    spread: 80,
+                    origin: { x: 1, y: 0.7 },
+                    colors: myColors,
+                    scalar: 1.2,
+                    ticks: 150,
+                    zIndex: 9999
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                } else {
+                    const msg = document.getElementById('thanks-msg');
+                    msg.classList.add('show');
+                    
+                    setTimeout(() => {
+                        msg.classList.remove('show');
+                    }, 3000); 
+                }
+            }());
+        }
+    </script>
+</body>
+</html>
