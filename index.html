@@ -225,11 +225,11 @@
 
             <div class="grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-12 px-10">
                 <template x-for="mascot in [
-                    { id: 'lailai', name: '来来', theme: 'red', tag: '红色路线', title: '来来 · 继往开来', desc: '继往开来，踏上密云的红色热土。这条路线将带您重温古北口长城抗战的烽火岁月，聆听英雄母亲邓玉芬的感人故事，在历史的厚重中汲取青年奋斗的力量。', img: 'images/lailai.jpg', map: 'images/route_lailai.jpg' },
-                    { id: 'mimi', name: '谧谧', theme: 'green', tag: '养生路线', title: '谧谧 · 宁静养生', desc: '寻觅静谧，放松身心。穿梭于密云的生态涵养区，享受日光山谷等天然氧吧的深呼吸，品尝健康有机的乡村素食，让疲惫的灵魂在山水间得到彻底治愈。', img: 'images/mimi.jpg', map: 'images/route_mimi.jpg' },
-                    { id: 'yunyun', name: '云云', theme: 'green', tag: '观鸟路线', title: '云云 · 自然观鸟', desc: '漫步云端，与飞羽为伴。密云水库不仅是首都的水源地，更是候鸟迁徙的重要驿站。跟随云云的脚步，用镜头捕捉珍稀鸟类的灵动瞬间，感悟生态振兴的硕果。', img: 'images/yunyun.jpg', map: 'images/route_yunyun.jpg' },
-                    { id: 'kangkang', name: '康康', theme: 'green', tag: '健身路线', title: '康康 · 活力健康', desc: '康健体魄，挥洒汗水。无论是环湖骑行的御风而行，还是攀登云蒙山的步步登高，这条路线是户外爱好者的天堂，让您在绿水青山中释放无限活力。', img: 'images/kangkang.jpg', map: 'images/route_kangkang.jpg' },
-                    { id: 'haihai', name: '嗨嗨', theme: 'green', tag: '青年路线', title: '嗨嗨 · 青春潮玩', desc: '青春嗨玩，不负韶华。结合星空露营、草地音乐与特色水上运动，专为年轻灵魂打造的社交与狂欢之旅。来密云，换一种方式燥起来，定义新一代的乡村文旅！', img: 'images/haihai.jpg', map: 'images/route_haihai.jpg' }
+                    { id: 'lailai', name: '来来', theme: 'red', tag: '红色路线', title: '来来 · 继往开来', desc: '继往开来，踏上密云的红色热土。这条路线将带您重温古北口长城抗战的烽火岁月，聆听英雄母亲邓玉芬的感人故事，在历史的厚重中汲取青年奋斗的力量。', img: 'images/lailai.png', map: 'images/route_lailai.jpg' },
+                    { id: 'mimi', name: '谧谧', theme: 'green', tag: '养生路线', title: '谧谧 · 宁静养生', desc: '寻觅静谧，放松身心。穿梭于密云的生态涵养区，享受日光山谷等天然氧吧的深呼吸，品尝健康有机的乡村素食，让疲惫的灵魂在山水间得到彻底治愈。', img: 'images/mimi.png', map: 'images/route_mimi.jpg' },
+                    { id: 'yunyun', name: '云云', theme: 'green', tag: '观鸟路线', title: '云云 · 自然观鸟', desc: '漫步云端，与飞羽为伴。密云水库不仅是首都的水源地，更是候鸟迁徙的重要驿站。跟随云云的脚步，用镜头捕捉珍稀鸟类的灵动瞬间，感悟生态振兴的硕果。', img: 'images/yunyun.png', map: 'images/route_yunyun.jpg' },
+                    { id: 'kangkang', name: '康康', theme: 'green', tag: '健身路线', title: '康康 · 活力健康', desc: '康健体魄，挥洒汗水。无论是环湖骑行的御风而行，还是攀登云蒙山的步步登高，这条路线是户外爱好者的天堂，让您在绿水青山中释放无限活力。', img: 'images/kangkang.png', map: 'images/route_kangkang.jpg' },
+                    { id: 'haihai', name: '嗨嗨', theme: 'green', tag: '青年路线', title: '嗨嗨 · 青春潮玩', desc: '青春嗨玩，不负韶华。结合星空露营、草地音乐与特色水上运动，专为年轻灵魂打造的社交与狂欢之旅。来密云，换一种方式燥起来，定义新一代的乡村文旅！', img: 'images/haihai.png', map: 'images/route_haihai.jpg' }
                 ]">
                     <div @click="openModal=true; modalTheme = (mascot.id === 'lailai' ? mascot.theme : 'route'); modalTitle=mascot.title; modalContent=mascot.desc; modalImg=mascot.map"
                          class="flex flex-col items-center cursor-pointer group">
